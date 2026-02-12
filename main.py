@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from langchain_openai import ChatOpenAI
 
 # load_dotenv(r'C:\Users\dovid\PycharmProjects\MedTutorUI\variable.env')
-
+load_dotenv()
 app = FastAPI()
 
 # ---- LLM client ----
