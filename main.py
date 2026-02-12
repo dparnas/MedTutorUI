@@ -3,11 +3,14 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
+import uvicorn
+import traceback
+from fastapi import HTTPException
 
 from langchain_openai import ChatOpenAI
 
-# load_dotenv(r'C:\Users\dovid\PycharmProjects\MedTutorUI\variable.env')
-load_dotenv()
+load_dotenv(r'C:\Users\dovid\PycharmProjects\MedTutorUI\variable.env')
+# load_dotenv()
 app = FastAPI()
 
 # ---- LLM client ----
@@ -73,30 +76,45 @@ def model_architecture():
         ],
     }
 
-# ---- Core endpoint: POST /api/execute ----
+# ---- Core endpoint: POST /api/execute ---
 @app.post("/api/execute")
 def execute(req: ExecuteRequest):
-    llm = get_llm()
+    try:
+        llm = get_llm()
+        ai_msg = llm.invoke(req.prompt)
+        content = getattr(ai_msg, "content", str(ai_msg))
 
-    # One call only
-    ai_msg = llm.invoke(req.prompt)          # returns an AIMessage
-    content = getattr(ai_msg, "content", str(ai_msg))
-
-    steps = [
-        {
+        steps = [{
             "module": "LLM",
-            "prompt": {
-                "compiled_prompt": req.prompt,
-                "provider": "llmod.ai",
-                "model": os.getenv("LLMOD_MODEL", "RPRTHPB-gpt-5-mini"),
-            },
+            "prompt": {"compiled_prompt": req.prompt},
             "response": {"content": content},
-        }
-    ]
+        }]
 
+        return {"status": "success", "error": None, "response": content, "steps": steps}
+
+    except Exception as e:
+        tb = traceback.format_exc()
+        # Print to Render logs
+        print("ERROR in /api/execute:", repr(e))
+        print(tb)
+
+        # Return a JSON error payload (so your test script can print it)
+        return {
+            "status": "error",
+            "error": f"{type(e).__name__}: {e}",
+            "traceback": tb,
+            "response": "",
+            "steps": []
+        }
+
+@app.get("/api/debug_env")
+def debug_env():
+    import os
     return {
-        "status": "success",
-        "error": None,
-        "response": content,
-        "steps": steps,
+        "has_LLMOD_API_KEY": bool(os.getenv("LLMOD_API_KEY")),
+        "LLMOD_BASE_URL": os.getenv("LLMOD_BASE_URL"),
+        "LLMOD_MODEL": os.getenv("LLMOD_MODEL"),
     }
+# if __name__ == "__main__":
+#     port = int(os.environ.get("PORT", 8000))
+#     uvicorn.run("main:app", host="127.0.0.1", port=port, reload=True)
