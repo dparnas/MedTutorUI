@@ -6,12 +6,14 @@ from pydantic import BaseModel
 import uvicorn
 import traceback
 from fastapi import HTTPException
+from fastapi.staticfiles import StaticFiles
 
 from langchain_openai import ChatOpenAI
 
 load_dotenv(r'C:\Users\dovid\PycharmProjects\MedTutorUI\variable.env')
 # load_dotenv()
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # ---- LLM client ----
 def get_llm() -> ChatOpenAI:
@@ -26,8 +28,7 @@ class ExecuteRequest(BaseModel):
 
 @app.get("/", response_class=HTMLResponse)
 def home():
-    # Serve a single-page UI (we'll create ui.html next)
-    with open("ui.html", "r", encoding="utf-8") as f:
+    with open("complex_ui.html", "r", encoding="utf-8") as f:
         return f.read()
 
 # ---- Required endpoints (stub minimal) ----
@@ -81,7 +82,7 @@ def model_architecture():
 def execute(req: ExecuteRequest):
     try:
         llm = get_llm()
-        ai_msg = llm.invoke(req.prompt)
+        ai_msg = llm.invoke(req.prompt) #todo: modify as input to general AI infrastructure
         content = getattr(ai_msg, "content", str(ai_msg))
 
         steps = [{
@@ -103,7 +104,7 @@ def execute(req: ExecuteRequest):
             "status": "error",
             "error": f"{type(e).__name__}: {e}",
             "traceback": tb,
-            "response": "",
+            "response": "", #todo: what would null look like? As per requirements
             "steps": []
         }
 

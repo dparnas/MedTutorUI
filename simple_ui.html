@@ -4,20 +4,49 @@
   <meta charset="utf-8" />
   <title>Agent UI (Single Page)</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 16px; }
+    body { font-family: Arial, sans-serif; margin: 16px; background: #f4f8fb; }
     .row { display: flex; gap: 16px; }
     .col { flex: 1; }
     textarea { width: 100%; height: 110px; }
     button { padding: 10px 14px; margin-top: 8px; cursor: pointer; }
-    .panel { border: 1px solid #ddd; border-radius: 8px; padding: 12px; }
+    .panel { border: 1px solid #ddd; border-radius: 8px; padding: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);}
     pre { white-space: pre-wrap; word-wrap: break-word; }
     .msg { margin: 8px 0; }
     .user { font-weight: bold; }
     .assistant { font-weight: bold; }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+.logo {
+  height: 60px;
+  width: auto;
+}
+
+.title-group h1 {
+  margin: 0;
+  font-size: 28px;
+  color: #0f4c81;
+}
+
+.tagline {
+  margin: 0;
+  font-size: 14px;
+  color: #5c7c95;
+}
   </style>
 </head>
 <body>
-  <h2>Minimal Agent UI</h2>
+  <div class="header">
+  <img src="/static/logo.png" alt="MedTutor Logo" class="logo"/>
+    <div class="title-group">
+      <h1>MedTutor</h1>
+      <p class="tagline">Learn Unlimited</p>
+    </div>
+  </div>
 
   <div class="row">
     <div class="col panel">
@@ -25,8 +54,11 @@
       <div id="history"></div>
 
       <textarea id="input" placeholder="Enter your prompt..."></textarea><br/>
-      <button id="run">Run Agent</button>
-      <span id="status"></span>
+      <div style="display:flex; gap:10px; align-items:center; margin-top:8px;">
+        <button id="run">Run Agent</button>
+        <button id="clear" type="button">Clear</button>
+        <span id="status"></span>
+      </div>
     </div>
 
     <div class="col panel">
@@ -113,7 +145,17 @@
         finalEl.textContent = String(e);
       }
     }
+    function clearConversation() {
+    messages.length = 0; // clears array in-place
+    renderHistory();
 
+    document.getElementById("final").textContent = "";
+    document.getElementById("steps").textContent = "";
+    document.getElementById("status").textContent = "";
+    document.getElementById("input").value = "";
+  }
+
+    document.getElementById("clear").addEventListener("click", clearConversation);
     document.getElementById("run").addEventListener("click", runAgent);
   </script>
 </body>

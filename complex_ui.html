@@ -1,0 +1,580 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MedTutor</title>
+  <style>
+    :root{
+      --bg: #f4f8fb;
+      --card: #ffffff;
+      --text: #0b2239;
+      --muted: #5c6b7a;
+      --border: #d9e2ec;
+      --shadow: 0 6px 18px rgba(15, 42, 67, 0.08);
+      --brand: #0f4c81;
+      --brand2: #1976b7;
+      --userBubble: #0f4c81;
+      --assistantBubble: #eef5fb;
+      --danger: #b42318;
+      --btn: #0f4c81;
+      --btnHover: #0b3a63;
+      --btnSecondary: #eef2f7;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* Header */
+    .topbar{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:14px 18px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.7);
+      backdrop-filter: blur(6px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .logo{
+      height: 44px;
+      width: auto;
+      border-radius: 10px;
+    }
+    .brandblock{
+      display:flex;
+      flex-direction:column;
+      line-height: 1.1;
+    }
+    .brandname{
+      font-weight: 800;
+      font-size: 18px;
+      color: var(--brand);
+      margin: 0;
+    }
+    .tagline{
+      font-size: 12px;
+      color: var(--muted);
+      margin: 2px 0 0 0;
+    }
+
+    /* Main layout */
+    .shell{
+      display:flex;
+      gap: 14px;
+      padding: 14px;
+      height: calc(100vh - 73px);
+    }
+
+    .chatCard{
+      flex: 1;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+      min-width: 520px;
+    }
+
+    /* Chat header inside card */
+    .chatHeader{
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+    }
+    .chatHeader h3{
+      margin:0;
+      font-size: 14px;
+      letter-spacing: 0.2px;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .status{
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .status.error{ color: var(--danger); font-weight: 650; }
+
+    /* Transcript */
+    .transcript{
+      padding: 16px;
+      overflow:auto;
+      flex: 1;
+      background:
+        radial-gradient(1200px 500px at 20% -10%, rgba(25, 118, 183, 0.10), transparent 60%),
+        radial-gradient(900px 400px at 110% 10%, rgba(15, 76, 129, 0.08), transparent 55%);
+    }
+
+    .msgRow{
+      display:flex;
+      margin: 10px 0;
+    }
+    .msgRow.user{ justify-content: flex-end; }
+    .msgRow.assistant{ justify-content: flex-start; }
+
+    .bubble{
+      max-width: min(680px, 80%);
+      padding: 10px 12px;
+      border-radius: 14px;
+      line-height: 1.35;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .bubble.user{
+      background: var(--userBubble);
+      color: white;
+      border-bottom-right-radius: 6px;
+    }
+    .bubble.assistant{
+      background: var(--assistantBubble);
+      color: var(--text);
+      border: 1px solid rgba(15, 76, 129, 0.12);
+      border-bottom-left-radius: 6px;
+    }
+    .meta{
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* Composer */
+    .composer{
+      border-top: 1px solid var(--border);
+      background: white;
+      padding: 12px;
+      display:flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    textarea{
+      flex: 1;
+      resize: vertical;
+      min-height: 64px;
+      max-height: 180px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 10px;
+      font-size: 14px;
+      outline: none;
+    }
+    textarea:focus{
+      border-color: rgba(25,118,183,0.5);
+      box-shadow: 0 0 0 3px rgba(25,118,183,0.15);
+    }
+
+    .btnRow{
+      display:flex;
+      gap: 8px;
+      align-items:center;
+    }
+    button{
+      border-radius: 12px;
+      border: 1px solid transparent;
+      padding: 10px 12px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .btnPrimary{
+      background: var(--btn);
+      color: white;
+    }
+    .btnPrimary:hover{ background: var(--btnHover); }
+    .btnSecondary{
+      background: var(--btnSecondary);
+      border-color: var(--border);
+      color: var(--text);
+    }
+    .btnSecondary:hover{
+      background: #e7edf5;
+    }
+    button:disabled{
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* Debug drawer */
+    .debugCard{
+      width: 420px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+    .debugHeader{
+      padding: 12px 12px;
+      border-bottom: 1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .debugHeaderLeft{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+    }
+    .pill{
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #eef5fb;
+      border: 1px solid rgba(15,76,129,0.12);
+      color: var(--brand);
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+    .toggleBtn{
+      background: white;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-weight: 800;
+    }
+    .toggleBtn:hover{ background: #f6f9fc; }
+
+    .tabs{
+      display:flex;
+      gap: 8px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      background: #fbfdff;
+    }
+    .tab{
+      flex: 1;
+      text-align:center;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: white;
+      cursor: pointer;
+      font-weight: 800;
+      color: var(--muted);
+      user-select:none;
+    }
+    .tab.active{
+      background: rgba(15,76,129,0.10);
+      border-color: rgba(15,76,129,0.25);
+      color: var(--brand);
+    }
+
+    .debugBody{
+      padding: 12px;
+      overflow:auto;
+      flex:1;
+    }
+    pre{
+      margin: 0;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      font-size: 12px;
+      color: #0b2239;
+    }
+    .hint{
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0 0 10px 0;
+    }
+
+    /* Collapsed drawer */
+    .debugCollapsed{
+      width: 54px;
+      min-width: 54px;
+    }
+    .debugCollapsed .tabs,
+    .debugCollapsed .debugBody{
+      display:none;
+    }
+    .debugCollapsed .debugHeader{
+      flex-direction:column;
+      justify-content:flex-start;
+      padding: 10px 8px;
+    }
+    .debugCollapsed .pill{
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      padding: 10px 8px;
+    }
+
+    /* Responsive */
+    @media (max-width: 1100px){
+      .shell{
+        flex-direction: column;
+        height: auto;
+      }
+      .chatCard{ min-width: 0; }
+      .debugCard{ width: 100%; }
+      .debugCollapsed{ width: 100%; min-width: 0; }
+      .debugCollapsed .pill{
+        writing-mode: horizontal-tb;
+        transform:none;
+      }
+      body{ padding-bottom: 18px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <!-- Put your cropped icon or logo at static/logo.png -->
+    <img src="/static/logo.png" class="logo" alt="MedTutor Logo"/>
+    <div class="brandblock">
+      <p class="brandname">MedTutor</p>
+      <p class="tagline">Learn Unlimited</p>
+    </div>
+  </div>
+
+  <div class="shell">
+    <!-- Chat -->
+    <div class="chatCard">
+      <div class="chatHeader">
+        <h3>Chat</h3>
+        <div id="status" class="status"></div>
+      </div>
+
+      <div id="transcript" class="transcript"></div>
+
+      <div class="composer">
+        <textarea id="input" placeholder="Ask MedTutor something..."></textarea>
+        <div class="btnRow">
+          <button id="run" class="btnPrimary">Run</button>
+          <button id="clear" class="btnSecondary" type="button">Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Debug drawer -->
+    <div id="debugCard" class="debugCard">
+      <div class="debugHeader">
+        <div class="debugHeaderLeft">
+          <div class="pill">Debug</div>
+        </div>
+        <button id="toggleDebug" class="toggleBtn" type="button">Collapse</button>
+      </div>
+
+      <div class="tabs">
+        <div id="tabFinal" class="tab active">Final</div>
+        <div id="tabSteps" class="tab">Steps</div>
+      </div>
+
+      <div class="debugBody">
+        <div id="finalPanel">
+          <p class="hint">Latest final response (same as last assistant message).</p>
+          <pre id="final"></pre>
+        </div>
+        <div id="stepsPanel" style="display:none;">
+          <p class="hint">Full execution trace (useful for debugging & grading).</p>
+          <pre id="steps"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const systemPrompt =
+`You are MedTutor, a helpful assistant. Keep answers concise unless asked otherwise.`;
+
+    // In-memory chat state
+    const messages = []; // { role: "user"|"assistant", content: string, ts: number }
+
+    let debugCollapsed = false;
+    let activeTab = "final";
+    let isRunning = false;
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, s => ({
+        "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
+      }[s]));
+    }
+
+    function fmtTime(ts){
+      try{
+        const d = new Date(ts);
+        return d.toLocaleTimeString([], {hour: "2-digit", minute:"2-digit"});
+      }catch(e){
+        return "";
+      }
+    }
+
+    function renderTranscript() {
+      const el = document.getElementById("transcript");
+      el.innerHTML = "";
+
+      if (messages.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "hint";
+        empty.style.padding = "6px 2px";
+        empty.textContent = "Start a conversation. Your messages will appear here.";
+        el.appendChild(empty);
+      }
+
+      for (const m of messages) {
+        const row = document.createElement("div");
+        row.className = `msgRow ${m.role}`;
+
+        const bubble = document.createElement("div");
+        bubble.className = `bubble ${m.role}`;
+        bubble.innerHTML = escapeHtml(m.content);
+
+        const wrapper = document.createElement("div");
+        wrapper.style.display = "flex";
+        wrapper.style.flexDirection = "column";
+        wrapper.appendChild(bubble);
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.style.textAlign = (m.role === "user") ? "right" : "left";
+        meta.textContent = fmtTime(m.ts);
+        wrapper.appendChild(meta);
+
+        row.appendChild(wrapper);
+        el.appendChild(row);
+      }
+
+      // Scroll to bottom
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function setStatus(text, isError=false) {
+      const s = document.getElementById("status");
+      s.textContent = text || "";
+      s.classList.toggle("error", !!isError);
+    }
+
+    function buildPrompt(newUserText, k=8) {
+      const tail = messages.slice(-k);
+      const history = tail.map(m => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`).join("\n");
+      return `SYSTEM:\n${systemPrompt}\n\nCONVERSATION:\n${history || "(none)"}\n\nNEW USER MESSAGE:\n${newUserText}`;
+    }
+
+    function setRunningState(running){
+      isRunning = running;
+      document.getElementById("run").disabled = running;
+      document.getElementById("clear").disabled = running;
+      document.getElementById("input").disabled = running;
+    }
+
+    async function runAgent() {
+      const input = document.getElementById("input");
+      const userText = input.value.trim();
+      if (!userText || isRunning) return;
+
+      setRunningState(true);
+
+      // Append user msg
+      messages.push({role: "user", content: userText, ts: Date.now()});
+      renderTranscript();
+      input.value = "";
+
+      const compiledPrompt = buildPrompt(userText);
+
+      setStatus("Running…");
+
+      // Clear debug panels for new run
+      document.getElementById("final").textContent = "";
+      document.getElementById("steps").textContent = "";
+
+      try {
+        const res = await fetch("/api/execute", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({prompt: compiledPrompt})
+        });
+
+        const raw = await res.text(); // read raw so we can show errors even if not JSON
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status} ${res.statusText}\n\n${raw}`);
+        }
+
+        let data;
+        try { data = JSON.parse(raw); }
+        catch (e) { throw new Error("Server returned non-JSON:\n\n" + raw); }
+
+        if (data.status !== "success") {
+          // If backend returns {status:"error", error:"..."} in JSON
+          throw new Error(data.error || "Agent returned status=error");
+        }
+
+        // Append assistant msg
+        messages.push({role: "assistant", content: data.response, ts: Date.now()});
+        renderTranscript();
+
+        document.getElementById("final").textContent = data.response || "";
+        document.getElementById("steps").textContent = JSON.stringify(data.steps || [], null, 2);
+
+        setStatus("Done.");
+      } catch (e) {
+        // show error in debug final panel
+        document.getElementById("final").textContent = String(e);
+        setStatus("Error (see Debug → Final).", true);
+      } finally {
+        setRunningState(false);
+      }
+    }
+
+    function clearConversation() {
+      if (isRunning) return;
+      messages.length = 0;
+      renderTranscript();
+      document.getElementById("final").textContent = "";
+      document.getElementById("steps").textContent = "";
+      setStatus("");
+      document.getElementById("input").value = "";
+    }
+
+    // Tabs
+    function setTab(tab){
+      activeTab = tab;
+      document.getElementById("tabFinal").classList.toggle("active", tab === "final");
+      document.getElementById("tabSteps").classList.toggle("active", tab === "steps");
+      document.getElementById("finalPanel").style.display = (tab === "final") ? "block" : "none";
+      document.getElementById("stepsPanel").style.display = (tab === "steps") ? "block" : "none";
+    }
+
+    // Debug drawer collapse
+    function toggleDebug(){
+      debugCollapsed = !debugCollapsed;
+      const card = document.getElementById("debugCard");
+      card.classList.toggle("debugCollapsed", debugCollapsed);
+      document.getElementById("toggleDebug").textContent = debugCollapsed ? "Expand" : "Collapse";
+    }
+
+    // Enter-to-send (Ctrl+Enter)
+    document.getElementById("input").addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        runAgent();
+      }
+    });
+
+    document.getElementById("run").addEventListener("click", runAgent);
+    document.getElementById("clear").addEventListener("click", clearConversation);
+    document.getElementById("tabFinal").addEventListener("click", () => setTab("final"));
+    document.getElementById("tabSteps").addEventListener("click", () => setTab("steps"));
+    document.getElementById("toggleDebug").addEventListener("click", toggleDebug);
+
+    // Initial render
+    renderTranscript();
+    setTab("final");
+  </script>
+</body>
+</html>
